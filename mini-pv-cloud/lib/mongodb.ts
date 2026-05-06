@@ -1,10 +1,11 @@
 import { MongoClient } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
-
-if (!uri) {
+const uriRaw = process.env.MONGODB_URI;
+if (!uriRaw) {
   throw new Error("Set MONGODB_URI in environment");
 }
+/** Resolved after guard — satisfies strict build (`string`, not `string | undefined`). */
+const uri: string = uriRaw;
 
 declare global {
   // eslint-disable-next-line no-var -- reuse across hot reload / serverless invocations
