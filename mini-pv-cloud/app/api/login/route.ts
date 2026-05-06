@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
 
 export async function POST(req: Request) {
-  const secretStr = process.env.AUTH_SECRET;
-  const sitePw = process.env.SITE_PASSWORD;
+  const secretStr = process.env.AUTH_SECRET?.trim();
+  const sitePw = process.env.SITE_PASSWORD?.trim() ?? "";
 
   if (!secretStr || !sitePw) {
     return NextResponse.json(
@@ -19,7 +19,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const pw = typeof body.password === "string" ? body.password : "";
+  const pw =
+    typeof body.password === "string" ? body.password.trim() : "";
   if (pw !== sitePw) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }

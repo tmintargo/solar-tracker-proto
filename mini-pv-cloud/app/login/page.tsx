@@ -19,8 +19,20 @@ function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
+      let payload: { error?: string } = {};
+      try {
+        payload = (await r.json()) as { error?: string };
+      } catch {
+        /* non-JSON */
+      }
       if (!r.ok) {
-        setError("Wrong password.");
+        if (r.status === 401) {
+          setError("Wrong password.");
+        } else if (typeof payload.error === "string") {
+          setError(payload.error);
+        } else {
+          setError(`Sign-in failed (${r.status}). Check Vercel env vars and redeploy.`);
+        }
         setLoading(false);
         return;
       }
