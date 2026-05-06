@@ -11,13 +11,14 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-function connect(): Promise<MongoClient> {
-  const client = new MongoClient(uri);
+function connect(connectionUri: string): Promise<MongoClient> {
+  const client = new MongoClient(connectionUri);
   return client.connect();
 }
 
 /** Cached client — recommended for Next.js + Atlas on Vercel. */
 const clientPromise =
-  global._mongoClientPromise ?? (global._mongoClientPromise = connect());
+  global._mongoClientPromise ??
+  (global._mongoClientPromise = connect(uri));
 
 export default clientPromise;
