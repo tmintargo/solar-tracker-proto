@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mini PV cloud log",
+  title: "Mini PV cloud",
+  description: "Mini solar PV — remote control",
+  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
+  themeColor: "#0f1419",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "system-ui", padding: "1rem" }}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
