@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { AUTH_COOKIE_NAME } from "@/lib/auth-cookie";
 
-export const COOKIE_NAME = "pv_auth";
+export const COOKIE_NAME = AUTH_COOKIE_NAME;
 
 async function isAuthed(request: NextRequest): Promise<boolean> {
   const secret = process.env.AUTH_SECRET;

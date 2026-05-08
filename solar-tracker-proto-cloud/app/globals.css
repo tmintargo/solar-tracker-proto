@@ -1,0 +1,317 @@
+/* Solar Tracker Proto — palette aligned with Kilat-style branding (black / #F6C232 / #4A4A4A) */
+:root {
+  --bg: #000000;
+  --bg-soft: #0a0a0a;
+  --surface: #141414;
+  --surface-border: #4a4a4a;
+  --text: #fafafa;
+  --muted: #a8a8a8;
+  --accent: #f6c232;
+  --accent-hover: #ffd54f;
+  --on-text: #111111;
+  --gray-ui: #4a4a4a;
+  --danger: #e53935;
+  --danger-hover: #c62828;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  background-image: radial-gradient(ellipse 900px 420px at 50% -20%, #1f1f1f 0%, var(--bg) 55%);
+  color: var(--text);
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.brand-logo-img {
+  height: 40px;
+  width: auto;
+  max-width: min(200px, 55vw);
+  object-fit: contain;
+}
+
+.product-tagline {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  margin-bottom: 20px;
+}
+
+label.field {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+input.field {
+  width: 100%;
+  padding: 14px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+
+input.field:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.btn {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-on {
+  background: var(--accent);
+  color: var(--on-text);
+  box-shadow: 0 0 20px rgba(246, 194, 50, 0.25);
+}
+
+.btn-on:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-off {
+  background: var(--gray-ui);
+  color: var(--text);
+  border: 1px solid #5c5c5c;
+}
+
+.btn-off:hover:not(:disabled) {
+  background: #5a5a5a;
+}
+
+.btn-pay {
+  background: linear-gradient(135deg, var(--accent) 0%, #c9a227 100%);
+  color: var(--on-text);
+  grid-column: 1 / -1;
+}
+
+.btn-pay:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 20px;
+  border: 1px solid var(--surface-border);
+}
+
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.error {
+  color: #ff8a80;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.linkbtn {
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  color: var(--muted);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.linkbtn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+code {
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+.status-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.on {
+  background: rgba(246, 194, 50, 0.18);
+  color: var(--accent);
+  border: 1px solid rgba(246, 194, 50, 0.45);
+}
+
+.status-badge.off {
+  background: rgba(74, 74, 74, 0.35);
+  color: #d4d4d4;
+  border: 1px solid var(--gray-ui);
+}
+
+.status-badge.unknown {
+  background: rgba(246, 194, 50, 0.08);
+  color: var(--muted);
+  border: 1px dashed var(--surface-border);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.login-main {
+  max-width: 380px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+
+.login-main h1 {
+  margin-bottom: 6px;
+}
+
+.login-main .hint {
+  margin-bottom: 18px;
+}
+
+.login-main label.plain {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.login-main input[type="password"] {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.login-main input[type="password"]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.login-main button.submit {
+  margin-top: 14px;
+  padding: 12px 18px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--on-text);
+  font-weight: 700;
+  width: 100%;
+}
+
+.login-main button.submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.login-main button.submit:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.login-main .err {
+  color: #ff8a80;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}

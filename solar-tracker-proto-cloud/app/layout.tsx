@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mini PV cloud",
-  description: "Mini solar PV — remote control",
+  title: "Solar Tracker Proto",
+  description: "Solar Tracker Proto — cloud remote control",
   viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
-  themeColor: "#0f1419",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

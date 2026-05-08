@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
+import { AUTH_COOKIE_NAME } from "@/lib/auth-cookie";
 
 export async function POST(req: Request) {
   const secretStr = process.env.AUTH_SECRET?.trim();
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("pv_auth", token, {
+  res.cookies.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     secure,
     sameSite: "lax",

@@ -48,51 +48,31 @@ function LoginForm() {
   }
 
   return (
-    <main style={{ maxWidth: 360, margin: "4rem auto", padding: "0 1rem" }}>
-      <h1 style={{ fontSize: "1.25rem" }}>Mini PV cloud</h1>
-      <p style={{ color: "#555", fontSize: "0.9rem" }}>
-        Enter your site password to continue.
-      </p>
+    <main className="login-main">
+      <h1>Solar Tracker Proto</h1>
+      <p className="hint">Enter your site password to continue.</p>
       <form onSubmit={onSubmit}>
-        <label style={{ display: "block", marginBottom: 8 }}>
+        <label className="plain">
           Password
           <input
             type="password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{
-              display: "block",
-              width: "100%",
-              marginTop: 6,
-              padding: "10px 12px",
-              fontSize: 16,
-            }}
           />
         </label>
-        <button
-          type="submit"
-          disabled={loading || !password}
-          style={{
-            marginTop: 12,
-            padding: "10px 16px",
-            fontSize: 16,
-            cursor: loading ? "wait" : "pointer",
-          }}
-        >
+        <button type="submit" className="submit" disabled={loading || !password}>
           {loading ? "…" : "Sign in"}
         </button>
       </form>
-      {error ? (
-        <p style={{ color: "#c00", marginTop: 12 }}>{error}</p>
-      ) : null}
+      {error ? <p className="err">{error}</p> : null}
     </main>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<p style={{ padding: "2rem" }}>Loading…</p>}>
+    <Suspense fallback={<p className="hint" style={{ padding: "2rem" }}>Loading…</p>}>
       <LoginForm />
     </Suspense>
   );
