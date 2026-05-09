@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { HelpTip } from "./HelpTip";
 
 const STORAGE_DEVICE = "solarTrackerProtoDeviceId";
 
 type LedGuess = "on" | "off" | "unknown";
 
-/** Resolve status from `/api/device-status` JSON (wrapped Node-RED shape or flat telemetry). */
 function guessLedStatus(raw: unknown): LedGuess {
   if (!raw || typeof raw !== "object") return "unknown";
   const o = raw as Record<string, unknown>;
@@ -129,34 +129,38 @@ export function ControlPanel() {
       ? { cls: "on", label: "Output ON" }
       : led === "off"
         ? { cls: "off", label: "Output OFF" }
-        : { cls: "unknown", label: "Status unknown" };
+        : { cls: "unknown", label: "Unknown" };
 
   const minutes = clampMinutes(durationMin);
   const timedSeconds = minutes * 60;
 
   return (
     <div className="control-panel">
-      <section className="panel-section">
-        <div className="status-strip">
+      <section className="glass-card">
+        <div className="card-head-row">
           <span className={`status-badge ${badge.cls}`}>
             <span className="dot" aria-hidden />
             {badge.label}
           </span>
-          <span className="hint inline-hint">
-            From last telemetry <code>telemetry.status</code> (cached on Node-RED).
-          </span>
+          <HelpTip
+            tip={
+              "Shows telemetry.status from the last snapshot Node-RED cached for this device_id (not live MQTT directly)."
+            }
+          />
         </div>
-
-        <p className="hint panel-lead">
-          Cloud → Cloudflare tunnel → Node-RED <code>POST /mqtt/cmd</code> → MQTT →
-          device. Configure <code>COMMAND_TUNNEL_URL</code> on Vercel.
-        </p>
       </section>
 
-      <section className="panel-section">
-        <label className="field" htmlFor="deviceId">
-          Device ID
-        </label>
+      <section className="glass-card glass-card-pad">
+        <div className="field-row-label">
+          <label className="field" htmlFor="deviceId">
+            Device ID
+          </label>
+          <HelpTip
+            tip={
+              "Must match DEVICE_ID in firmware and MQTT topics (e.g. devices/your-id/cmd)."
+            }
+          />
+        </div>
         <input
           id="deviceId"
           className="field"
@@ -187,9 +191,16 @@ export function ControlPanel() {
         </div>
 
         <div className="timed-block">
-          <label className="field" htmlFor="durationMin">
-            Timed ON — duration (minutes)
-          </label>
+          <div className="field-row-label">
+            <label className="field" htmlFor="durationMin">
+              Timed ON (minutes)
+            </label>
+            <HelpTip
+              tip={
+                "Sends ON with duration_sec = minutes × 60. Range 1–1440 (24 h). Firmware turns OFF when the window ends."
+              }
+            />
+          </div>
           <div className="timed-row">
             <input
               id="durationMin"
@@ -211,20 +222,24 @@ export function ControlPanel() {
                 })
               }
             >
-              Turn ON for {minutes} min
+              Apply ({minutes} min)
             </button>
           </div>
-          <p className="hint timed-cap">1–1440 minutes (24 h max).</p>
         </div>
       </section>
 
       {err ? <p className="error">{err}</p> : null}
 
-      <section className="panel-section">
-        <div className="card">
-          <h2>Last telemetry (raw JSON)</h2>
-          <pre className="pre">{statusText}</pre>
+      <section className="glass-card telemetry-card">
+        <div className="card-head-row">
+          <h2 className="telemetry-title">Telemetry</h2>
+          <HelpTip
+            tip={
+              "Raw JSON returned by Vercel from Node-RED (/api/device/status). Updates every few seconds while this page is open."
+            }
+          />
         </div>
+        <pre className="pre telemetry-pre">{statusText}</pre>
       </section>
     </div>
   );

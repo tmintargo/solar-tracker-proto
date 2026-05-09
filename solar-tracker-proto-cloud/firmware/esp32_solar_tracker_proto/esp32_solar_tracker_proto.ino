@@ -1,7 +1,7 @@
 /*
  * Solar Tracker Proto — Seeed XIAO ESP32-C3 + 0.96" OLED (SSD1306 I2C)
  *
- * Output for this experiment: OLED text (ON/OFF + link status), not a GPIO LED.
+ * Output for this experiment: OLED text (ON/OFF + WiFi/MQTT + countdown when timed ON).
  *
  * Cmd:  devices/<DEVICE_ID>/cmd  JSON { "state": true|false OR "on"|"off", optional validFor / duration_sec }
  * Tel:  devices/<DEVICE_ID>/telemetry  JSON includes "status":"on"|"off"
@@ -20,8 +20,8 @@
 #include <esp_wifi.h>
 #include <time.h>
 
-const char *WIFI_SSID = "X.factory2.4G";
-const char *WIFI_PASS = "make0314";
+const char *WIFI_SSID = "YOUR_WIFI_SSID";
+const char *WIFI_PASS = "YOUR_WIFI_PASSWORD";
 
 static const IPAddress MQTT_IP(192, 168, 100, 50);
 const uint16_t MQTT_PORT = 1883;
@@ -76,6 +76,24 @@ static bool parseStateFromJson(JsonVariantConst v, bool *onOut) {
   return false;
 }
 
+/** Remaining seconds for active timer, or 0 if none / expired edge. */
+static unsigned long remainingTimerSeconds() {
+  if (!relayOn)
+    return 0;
+  if (paidUntilMillis != 0) {
+    long r = (long)(paidUntilMillis - millis());
+    if (r <= 0)
+      return 0;
+    return (unsigned long)(r / 1000UL);
+  }
+  if (paidUntilUnix != 0) {
+    time_t now = time(nullptr);
+    if (now > 1700000000 && (time_t)paidUntilUnix > now)
+      return (unsigned long)((time_t)paidUntilUnix - now);
+  }
+  return 0;
+}
+
 void refreshOled() {
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
@@ -86,17 +104,38 @@ void refreshOled() {
   display.print(F("ID "));
   display.println(DEVICE_ID);
 
-  const char *wifiSt = (WiFi.status() == WL_CONNECTED) ? "WiFi OK" : "WiFi --";
-  display.println(wifiSt);
+  const bool wifiOk = (WiFi.status() == WL_CONNECTED);
+  const bool mqttOk = mqtt.connected();
+  display.print(F("WiFi "));
+  display.print(wifiOk ? F("OK") : F("--"));
+  display.print(F("  MQTT "));
+  display.println(mqttOk ? F("OK") : F("--"));
 
-  display.print(F("MQTT "));
-  display.println(mqtt.connected() ? F("OK") : F("--"));
-
-  display.drawLine(0, 34, SCREEN_W, 34, SSD1306_WHITE);
+  display.drawLine(0, 24, SCREEN_W, 24, SSD1306_WHITE);
 
   display.setTextSize(2);
-  display.setCursor(0, 38);
+  display.setCursor(0, 28);
   display.println(relayOn ? F("ON") : F("OFF"));
+
+  display.setTextSize(1);
+  display.setCursor(0, 48);
+
+  const unsigned long rem = remainingTimerSeconds();
+  const bool timed = relayOn && rem > 0 &&
+                     (paidUntilMillis != 0 || paidUntilUnix != 0);
+  if (timed) {
+    unsigned long h = rem / 3600UL;
+    unsigned long m = (rem % 3600UL) / 60UL;
+    unsigned long s = rem % 60UL;
+    char line[22];
+    if (h > 0)
+      snprintf(line, sizeof(line), "Left %lu:%02lu:%02lu", h, m, s);
+    else
+      snprintf(line, sizeof(line), "Left %lu:%02lu", m, s);
+    display.print(line);
+  } else if (relayOn) {
+    display.print(F("No timer"));
+  }
 
   display.display();
 }
@@ -329,6 +368,16 @@ void loop() {
   enforcePaidWindow();
 
   unsigned long now = millis();
+
+  /* Update OLED ~1 Hz while a relative/unix window is counting down */
+  static unsigned long lastOledMs = 0;
+  if (relayOn && (paidUntilMillis != 0 || paidUntilUnix != 0)) {
+    if (now - lastOledMs >= 1000UL) {
+      lastOledMs = now;
+      refreshOled();
+    }
+  }
+
   if (now - lastPub < TELEMETRY_MS)
     return;
   lastPub = now;
