@@ -1,25 +1,36 @@
-import { MongoClient } from "mongodb";
-
-const uriRaw = process.env.MONGODB_URI;
-if (!uriRaw) {
-  throw new Error("Set MONGODB_URI in environment");
-}
-/** Resolved after guard — satisfies strict build (`string`, not `string | undefined`). */
-const uri: string = uriRaw;
+import { Db, MongoClient } from "mongodb";
 
 declare global {
   // eslint-disable-next-line no-var -- reuse across hot reload / serverless invocations
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-function connect(connectionUri: string): Promise<MongoClient> {
-  const client = new MongoClient(connectionUri);
-  return client.connect();
+function mongoUri(): string | null {
+  const u = process.env.MONGODB_URI?.trim();
+  return u || null;
 }
 
-/** Cached client — recommended for Next.js + Atlas on Vercel. */
-const clientPromise =
-  global._mongoClientPromise ??
-  (global._mongoClientPromise = connect(uri));
+/** Database name from env or default (matches Atlas app naming). */
+export function mongoDbName(): string {
+  return process.env.MONGODB_DB?.trim() || "solar_tracker_proto";
+}
 
-export default clientPromise;
+/**
+ * Shared Mongo client for Next.js serverless (single cached promise).
+ * Returns null if `MONGODB_URI` is unset — callers should skip DB work.
+ */
+export function getMongoClientPromise(): Promise<MongoClient> | null {
+  const uri = mongoUri();
+  if (!uri) return null;
+  if (!global._mongoClientPromise) {
+    global._mongoClientPromise = new MongoClient(uri).connect();
+  }
+  return global._mongoClientPromise;
+}
+
+export async function getDb(): Promise<Db | null> {
+  const p = getMongoClientPromise();
+  if (!p) return null;
+  const client = await p;
+  return client.db(mongoDbName());
+}

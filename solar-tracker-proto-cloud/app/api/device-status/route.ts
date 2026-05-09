@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { maybeLogTelemetrySnapshot } from "@/lib/mongo-event-log";
 import { tunnelBase } from "@/lib/tunnel";
 
 export async function GET(req: Request) {
@@ -34,6 +35,12 @@ export async function GET(req: Request) {
     } catch {
       parsed = { raw: text };
     }
+
+    await maybeLogTelemetrySnapshot({
+      device_id: deviceId,
+      tunnel_http_ok: r.ok,
+      snapshot: parsed,
+    });
 
     return NextResponse.json(parsed, { status: r.ok ? 200 : 502 });
   } catch (e) {

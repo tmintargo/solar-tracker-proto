@@ -6,21 +6,41 @@ const STORAGE_DEVICE = "solarTrackerProtoDeviceId";
 
 type LedGuess = "on" | "off" | "unknown";
 
+/** Resolve status from `/api/device-status` JSON (wrapped Node-RED shape or flat telemetry). */
 function guessLedStatus(raw: unknown): LedGuess {
   if (!raw || typeof raw !== "object") return "unknown";
   const o = raw as Record<string, unknown>;
-  const s = o.status;
-  if (s === "on" || s === "off") return s;
-  if (typeof s === "string") {
-    const t = s.toLowerCase();
-    if (t === "on" || t === "off") return t;
+
+  const readStatus = (obj: Record<string, unknown>): LedGuess => {
+    const s = obj.status;
+    if (s === "on" || s === "off") return s;
+    if (typeof s === "string") {
+      const t = s.toLowerCase();
+      if (t === "on" || t === "off") return t as LedGuess;
+    }
+    if (typeof obj.relay === "boolean") return obj.relay ? "on" : "off";
+    return "unknown";
+  };
+
+  const tel = o.telemetry;
+  if (tel && typeof tel === "object") {
+    const g = readStatus(tel as Record<string, unknown>);
+    if (g !== "unknown") return g;
   }
-  if (typeof o.relay === "boolean") return o.relay ? "on" : "off";
-  return "unknown";
+
+  return readStatus(o);
+}
+
+function clampMinutes(n: number): number {
+  if (!Number.isFinite(n) || n < 1) return 1;
+  const max = 24 * 60;
+  if (n > max) return max;
+  return Math.floor(n);
 }
 
 export function ControlPanel() {
-  const [deviceId, setDeviceId] = useState("esp32-devkit");
+  const [deviceId, setDeviceId] = useState("xiao-esp32c3");
+  const [durationMin, setDurationMin] = useState(30);
   const [err, setErr] = useState("");
   const [statusText, setStatusText] = useState("Loading…");
   const [led, setLed] = useState<LedGuess>("unknown");
@@ -84,7 +104,11 @@ export function ControlPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ device_id: deviceId.trim(), ...body }),
       });
-      const data = (await r.json()) as { ok?: boolean; upstream?: unknown; error?: string };
+      const data = (await r.json()) as {
+        ok?: boolean;
+        upstream?: unknown;
+        error?: string;
+      };
       if (!r.ok) {
         setErr(
           typeof data.error === "string"
@@ -102,78 +126,106 @@ export function ControlPanel() {
 
   const badge =
     led === "on"
-      ? { cls: "on", label: "LED ON" }
+      ? { cls: "on", label: "Output ON" }
       : led === "off"
-        ? { cls: "off", label: "LED OFF" }
+        ? { cls: "off", label: "Output OFF" }
         : { cls: "unknown", label: "Status unknown" };
 
+  const minutes = clampMinutes(durationMin);
+  const timedSeconds = minutes * 60;
+
   return (
-    <>
-      <div className="status-strip">
-        <span className={`status-badge ${badge.cls}`}>
-          <span className="dot" aria-hidden />
-          {badge.label}
-        </span>
-        <span className="hint" style={{ margin: 0 }}>
-          From last telemetry <code>status</code> (or legacy <code>relay</code>).
-        </span>
-      </div>
+    <div className="control-panel">
+      <section className="panel-section">
+        <div className="status-strip">
+          <span className={`status-badge ${badge.cls}`}>
+            <span className="dot" aria-hidden />
+            {badge.label}
+          </span>
+          <span className="hint inline-hint">
+            From last telemetry <code>telemetry.status</code> (cached on Node-RED).
+          </span>
+        </div>
 
-      <p className="hint">
-        Solar Tracker Proto cloud → Cloudflare tunnel → Node-RED{" "}
-        <code>POST /mqtt/cmd</code> → MQTT → ESP32. Set{" "}
-        <code>COMMAND_TUNNEL_URL</code> on Vercel.
-      </p>
+        <p className="hint panel-lead">
+          Cloud → Cloudflare tunnel → Node-RED <code>POST /mqtt/cmd</code> → MQTT →
+          device. Configure <code>COMMAND_TUNNEL_URL</code> on Vercel.
+        </p>
+      </section>
 
-      <label className="field" htmlFor="deviceId">
-        Device ID
-      </label>
-      <input
-        id="deviceId"
-        className="field"
-        value={deviceId}
-        onChange={(e) => setDeviceId(e.target.value)}
-        autoComplete="off"
-        placeholder="esp32-devkit"
-      />
+      <section className="panel-section">
+        <label className="field" htmlFor="deviceId">
+          Device ID
+        </label>
+        <input
+          id="deviceId"
+          className="field"
+          value={deviceId}
+          onChange={(e) => setDeviceId(e.target.value)}
+          autoComplete="off"
+          placeholder="xiao-esp32c3"
+          spellCheck={false}
+        />
 
-      <div className="row">
-        <button
-          type="button"
-          className="btn btn-on"
-          disabled={busy}
-          onClick={() => void sendCmd({ state: "on" })}
-        >
-          Turn ON
-        </button>
-        <button
-          type="button"
-          className="btn btn-off"
-          disabled={busy}
-          onClick={() => void sendCmd({ state: "off" })}
-        >
-          Turn OFF
-        </button>
-      </div>
-      <div className="row">
-        <button
-          type="button"
-          className="btn btn-pay"
-          disabled={busy}
-          onClick={() =>
-            void sendCmd({ state: "on", duration_sec: 30 * 60 })
-          }
-        >
-          Dummy pay — 30 min
-        </button>
-      </div>
+        <div className="row">
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy}
+            onClick={() => void sendCmd({ state: "on" })}
+          >
+            Turn ON
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={busy}
+            onClick={() => void sendCmd({ state: "off" })}
+          >
+            Turn OFF
+          </button>
+        </div>
+
+        <div className="timed-block">
+          <label className="field" htmlFor="durationMin">
+            Timed ON — duration (minutes)
+          </label>
+          <div className="timed-row">
+            <input
+              id="durationMin"
+              type="number"
+              className="field field-number"
+              min={1}
+              max={1440}
+              value={durationMin}
+              onChange={(e) => setDurationMin(Number(e.target.value))}
+            />
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={busy}
+              onClick={() =>
+                void sendCmd({
+                  state: "on",
+                  duration_sec: timedSeconds,
+                })
+              }
+            >
+              Turn ON for {minutes} min
+            </button>
+          </div>
+          <p className="hint timed-cap">1–1440 minutes (24 h max).</p>
+        </div>
+      </section>
 
       {err ? <p className="error">{err}</p> : null}
 
-      <div className="card">
-        <h2>Last telemetry (raw JSON)</h2>
-        <pre className="pre">{statusText}</pre>
-      </div>
-    </>
+      <section className="panel-section">
+        <div className="card">
+          <h2>Last telemetry (raw JSON)</h2>
+          <pre className="pre">{statusText}</pre>
+        </div>
+      </section>
+    </div>
   );
 }
