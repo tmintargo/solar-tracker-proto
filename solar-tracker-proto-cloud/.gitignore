@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build / debug
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Vercel CLI local link (can contain project metadata)
+.vercel
+
+# Env files with secrets — do not commit
+.env
+.env.local
+.env*.local
+.env.local.example
